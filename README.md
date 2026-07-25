@@ -1,8 +1,11 @@
 # Field Engineer Toolkit
 
-[![GitHub Pages Deployment](https://github.com/p1pp89/field-engineer-toolkit/actions/workflows/deploy.yml/badge.svg)](https://github.com/p1pp89/field-engineer-toolkit)
-[![Standard: CEI 64-8 / IEC 60364](https://img.shields.io/badge/Normativa-CEI%2064--8-blue.svg)](https://www.ceiway.it)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub Pages Deployment](https://img.shields.io/github/actions/workflow/status/p1pp89/field-engineer-toolkit/deploy.yml?style=flat-square&logo=github&label=Deploy)](https://github.com/p1pp89/field-engineer-toolkit/actions/workflows/deploy.yml)
+[![Standard: CEI 64-8](https://img.shields.io/badge/Normativa-CEI%2064--8-blue.svg?style=flat-square)](https://www.ceiway.it)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/p1pp89/field-engineer-toolkit?style=flat-square&logo=github)](https://github.com/p1pp89/field-engineer-toolkit/stargazers)
+[![Issues](https://img.shields.io/github/issues/p1pp89/field-engineer-toolkit?style=flat-square&logo=github)](https://github.com/p1pp89/field-engineer-toolkit/issues)
+[![Donate PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?style=flat-square&logo=paypal&logoColor=white)](https://www.paypal.com/donate/?hosted_button_id=YVQPMTVWK46R4)
 
 **Field Engineer Toolkit** is a static, modular, and performance-oriented web application designed specifically for engineers and technicians working in the field, revamping, and maintenance of low-voltage (LV) electrical systems.
 
