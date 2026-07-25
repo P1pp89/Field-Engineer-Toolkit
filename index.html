@@ -13,7 +13,6 @@
     </script>
     <link rel="stylesheet" href="./css/styles.css">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Mermaid.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
@@ -25,12 +24,15 @@
                 <i data-lucide="cpu" class="w-6 h-6 text-sky-400"></i>
                 <span class="font-bold text-lg tracking-tight text-white">FieldEng<span class="text-sky-400">Toolkit</span></span>
             </div>
-            <nav class="flex gap-2">
+            <nav class="flex gap-2 overflow-x-auto py-2">
                 <button id="nav-cable" type="button" class="nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-sky-600/20 text-sky-400 border border-sky-500/30">
                     <i data-lucide="zap" class="w-4 h-4"></i> Cavi
                 </button>
                 <button id="nav-breaker" type="button" class="nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200">
                     <i data-lucide="shield-alert" class="w-4 h-4"></i> Protezioni
+                </button>
+                <button id="nav-fault" type="button" class="nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200">
+                    <i data-lucide="activity" class="w-4 h-4"></i> Anello Guasto ($Zs$)
                 </button>
                 <button id="nav-diagram" type="button" class="nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200">
                     <i data-lucide="git-merge" class="w-4 h-4"></i> Unifilare
@@ -252,6 +254,98 @@
         </section>
 
         <!-- ========================================== -->
+        <!-- MODULO 4: ANELLO DI GUASTO (ZS)            -->
+        <!-- ========================================== -->
+        <section id="module-fault" class="module-section hidden">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                    Verifica Anello di Guasto ($Zs$) <span class="text-xs font-normal bg-sky-950 text-sky-300 border border-sky-800 px-2 py-1 rounded">CEI 64-8 (Contatti Indiretti)</span>
+                </h1>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 bg-slate-800/80 border border-slate-700/80 p-5 rounded-xl">
+                    <form id="fault-form" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Tensione Nominale Fase-Terra ($U_0$)</label>
+                            <select id="f-u0" class="form-input">
+                                <option value="230">230 V (Sistemi BT standard Italia)</option>
+                                <option value="400">400 V (Interfase)</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Lunghezza Linea (m)</label>
+                                <input type="number" id="f-length" step="1" min="1" value="50" class="form-input" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Sezione Fase/PE ($S$ mm²)</label>
+                                <select id="f-section" class="form-input">
+                                    <option value="1.5">1.5 mm²</option>
+                                    <option value="2.5" selected>2.5 mm²</option>
+                                    <option value="4">4 mm²</option>
+                                    <option value="6">6 mm²</option>
+                                    <option value="10">10 mm²</option>
+                                    <option value="16">16 mm²</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Taglia Interruttore ($I_n$ A)</label>
+                                <input type="number" id="f-in" step="1" min="1" value="16" class="form-input" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Curva d'Intervento</label>
+                                <select id="f-curve" class="form-input">
+                                    <option value="B">Curva B (3-5 In)</option>
+                                    <option value="C" selected>Curva C (5-10 In)</option>
+                                    <option value="D">Curva D (10-20 In)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 mt-2">
+                            <i data-lucide="check-circle-2" class="w-4 h-4"></i> Verifica $Zs$ & Tempi
+                        </button>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="bg-slate-800/80 border border-slate-700/80 p-5 rounded-xl h-full">
+                        <h2 class="text-md font-semibold text-slate-300 mb-4 uppercase tracking-wider text-xs">Esito Protezione Contatti Indiretti</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+                                <span class="text-xs text-slate-400 block">Impedenza ($Zs$)</span>
+                                <span id="out-zs" class="text-2xl font-mono font-bold text-sky-400">- &Omega;</span>
+                            </div>
+                            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+                                <span class="text-xs text-slate-400 block">Corrente Guasto ($I_d$)</span>
+                                <span id="out-id" class="text-2xl font-mono font-bold text-emerald-400">- A</span>
+                            </div>
+                            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+                                <span class="text-xs text-slate-400 block">Tempo Intervento</span>
+                                <span id="out-time" class="text-2xl font-mono font-bold text-amber-400">&le; 0.4s</span>
+                            </div>
+                        </div>
+
+                        <div id="fault-status-box" class="p-4 rounded-lg border mb-4 bg-slate-900/40 border-slate-700 text-slate-300 text-sm">...</div>
+
+                        <div class="p-4 bg-slate-900/60 rounded border border-slate-700 font-mono text-xs space-y-2 text-slate-300">
+                            <div class="flex justify-between">
+                                <span>Corrente Intervento Magnetico Minima ($I_a$):</span>
+                                <span id="val-ia" class="font-bold text-white">- A</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Condizione Norma ($Zs \cdot I_a \le U_0$):</span>
+                                <span id="val-cond" class="font-bold text-white">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
         <!-- MODULO 3: SCHEMA UNIFILARE                 -->
         <!-- ========================================== -->
         <section id="module-diagram" class="module-section hidden">
@@ -284,7 +378,7 @@
 
     </main>
 
-    <!-- Modale Semplice (Fissato tipo type="button") -->
+    <!-- Modale Semplice -->
     <div id="node-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 shadow-2xl">
             <h3 id="modal-title" class="text-lg font-bold text-white mb-4">Nuovo Dispositivo</h3>

@@ -41,20 +41,22 @@ if (window.mermaid) {
 document.addEventListener('DOMContentLoaded', () => {
     if (window.lucide) window.lucide.createIcons();
 
-    // -- NAVIGAZIONE TAB --
+    // -- NAVIGAZIONE TAB (4 MODULI) --
     const navCableBtn = document.getElementById('nav-cable');
     const navBreakerBtn = document.getElementById('nav-breaker');
+    const navFaultBtn = document.getElementById('nav-fault');
     const navDiagramBtn = document.getElementById('nav-diagram');
     
     const moduleCable = document.getElementById('module-cable');
     const moduleBreaker = document.getElementById('module-breaker');
+    const moduleFault = document.getElementById('module-fault');
     const moduleDiagram = document.getElementById('module-diagram');
 
     function switchTab(target) {
-        [navCableBtn, navBreakerBtn, navDiagramBtn].forEach(btn => {
+        [navCableBtn, navBreakerBtn, navFaultBtn, navDiagramBtn].forEach(btn => {
             btn.className = "nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200";
         });
-        [moduleCable, moduleBreaker, moduleDiagram].forEach(mod => mod.classList.add('hidden'));
+        [moduleCable, moduleBreaker, moduleFault, moduleDiagram].forEach(mod => mod.classList.add('hidden'));
 
         if (target === 'cable') {
             navCableBtn.className = "nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-sky-600/20 text-sky-400 border border-sky-500/30";
@@ -62,6 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (target === 'breaker') {
             navBreakerBtn.className = "nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-sky-600/20 text-sky-400 border border-sky-500/30";
             moduleBreaker.classList.remove('hidden');
+        } else if (target === 'fault') {
+            navFaultBtn.className = "nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-sky-600/20 text-sky-400 border border-sky-500/30";
+            moduleFault.classList.remove('hidden');
+            document.getElementById('fault-form').dispatchEvent(new Event('submit'));
         } else if (target === 'diagram') {
             navDiagramBtn.className = "nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-sky-600/20 text-sky-400 border border-sky-500/30";
             moduleDiagram.classList.remove('hidden');
@@ -71,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     navCableBtn.addEventListener('click', () => switchTab('cable'));
     navBreakerBtn.addEventListener('click', () => switchTab('breaker'));
+    navFaultBtn.addEventListener('click', () => switchTab('fault'));
     navDiagramBtn.addEventListener('click', () => switchTab('diagram'));
 
     // -- HELPER IKC INTERRUTTORE --
@@ -185,7 +192,50 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================
-    // LOGICA MODULO 3: SCHEMA UNIFILARE (FIXED)
+    // LOGICA MODULO 4: ANELLO DI GUASTO (Zs)
+    // ==========================================
+    document.getElementById('fault-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const U0 = parseFloat(document.getElementById('f-u0').value) || 230;
+        const L = parseFloat(document.getElementById('f-length').value) || 50;
+        const S = parseFloat(document.getElementById('f-section').value) || 2.5;
+        const In = parseFloat(document.getElementById('f-in').value) || 16;
+        const curve = document.getElementById('f-curve').value;
+
+        // Moltiplicatore corrente magnetica (B=5, C=10, D=20)
+        const curveMultipliers = { 'B': 5, 'C': 10, 'D': 20 };
+        const IaMultiplier = curveMultipliers[curve] || 10;
+        const Ia = In * IaMultiplier;
+
+        // Resistività Rame a 20°C e stima cavo fase+PE
+        const rho = RESISTIVITY['Cu'];
+        const R = (2 * rho * L) / S; // Andata (Fase) + Ritorno (PE di pari sezione)
+        const X = 0.00008 * L;      // Reattanza stimata (~0.08 mOhm/m)
+        const Zs = Math.sqrt(R*R + X*X);
+
+        // Corrente di guasto minima Id = U0 / Zs
+        const Id = U0 / Zs;
+
+        // Verifica condizione CEI 64-8 (Zs * Ia <= U0 oppure Id >= Ia)
+        const isVerified = Id >= Ia;
+
+        document.getElementById('out-zs').textContent = Zs.toFixed(3) + ' Ω';
+        document.getElementById('out-id').textContent = Id.toFixed(1) + ' A';
+        document.getElementById('val-ia').textContent = Ia.toFixed(1) + ' A';
+        document.getElementById('val-cond').textContent = (Zs * Ia).toFixed(1) + ' V (≤ ' + U0 + 'V)';
+
+        const statusBox = document.getElementById('fault-status-box');
+        if (isVerified) {
+            statusBox.className = "p-4 rounded-lg border mb-4 bg-emerald-950/40 border-emerald-800 text-emerald-300 text-sm";
+            statusBox.innerHTML = `<strong>✓ Protezione Garantita:</strong> La corrente di guasto ($I_d = ${Id.toFixed(1)}A$) supera la soglia magnetica ($I_a = ${Ia}A$). L'interruttore interverrà in tempo $\le 0.4\text{s}$.`;
+        } else {
+            statusBox.className = "p-4 rounded-lg border mb-4 bg-rose-950/40 border-rose-800 text-rose-300 text-sm";
+            statusBox.innerHTML = `<strong>✕ Attenzione:</strong> Linea troppo lunga o sezione inadeguata. $I_d$ insufficiente a garantire lo sgancio magnetico nei tempi prescritti. Ridurre la lunghezza o aumentare la sezione del PE.`;
+        }
+    });
+
+    // ==========================================
+    // LOGICA MODULO 3: SCHEMA UNIFILARE
     // ==========================================
     const modal = document.getElementById('node-modal');
     const btnAddNode = document.getElementById('btn-add-node');
@@ -218,8 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     nodeForm.addEventListener('submit', (e) => {
-        e.preventDefault(); // Impedisce il refresh della pagina e il cambio tab indesiderato
-        
+        e.preventDefault();
         const editId = document.getElementById('node-edit-id').value;
         const name = document.getElementById('n-name').value;
         const inVal = parseInt(document.getElementById('n-in').value);
