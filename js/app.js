@@ -1,5 +1,5 @@
 // ==========================================
-// CORE 1: CABLE SIZING (Tabellare)
+// CORE 1: CABLE SIZING (Tabellare + Vincolo Cdt)
 // ==========================================
 const SECTIONS = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150];
 const AMPACITY_TABLES = {
@@ -69,6 +69,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const installation = document.getElementById('c-installation').value;
         const length = parseFloat(document.getElementById('c-length').value) || 1;
         const cosphi = parseFloat(document.getElementById('c-cosphi').value) || 0.9;
+        
+        // Lettura e limitazione del parametro Cdt Max al 4%
+        let requestedVDrop = parseFloat(document.getElementById('c-max-vdrop').value) || 4.0;
+        const maxVDrop = Math.min(requestedVDrop, 4.0);
 
         const P = powerKw * 1000;
         const Ib = voltage === 400 ? P / (Math.sqrt(3) * voltage * cosphi) : P / (voltage * cosphi);
@@ -76,24 +80,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const material = cableType.split('-')[0];
         const tableRef = material === 'Al' ? 'Cu-EPR' : cableType; 
         const izArray = AMPACITY_TABLES[tableRef][installation];
+        const rho = RESISTIVITY[material];
         
         let selectedIndex = -1;
         let Iz = 0;
+        let finalVDropPct = 0;
 
+        // Ricerca con validazione termica E validazione cdt
         for (let i = 0; i < SECTIONS.length; i++) {
             if (material === 'Al' && SECTIONS[i] < 16) continue;
+            
             const currentIz = material === 'Al' ? izArray[i] * 0.78 : izArray[i];
+            
             if (currentIz >= Ib) {
-                selectedIndex = i; Iz = currentIz; break;
+                const S = SECTIONS[i];
+                const currentVDrop = voltage === 400 ? (Math.sqrt(3) * length * Ib * cosphi * rho) / S : (2 * length * Ib * cosphi * rho) / S;
+                const currentVDropPct = (currentVDrop / voltage) * 100;
+                
+                if (currentVDropPct <= maxVDrop) {
+                    selectedIndex = i; 
+                    Iz = currentIz; 
+                    finalVDropPct = currentVDropPct;
+                    break;
+                }
             }
-        }
-
-        let vDropPct = 0;
-        if (selectedIndex !== -1) {
-            const S = SECTIONS[selectedIndex];
-            const rho = RESISTIVITY[material];
-            const vDrop = voltage === 400 ? (Math.sqrt(3) * length * Ib * cosphi * rho) / S : (2 * length * Ib * cosphi * rho) / S;
-            vDropPct = (vDrop / voltage) * 100;
         }
 
         // Output UI Cavo
@@ -103,11 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectedIndex !== -1) {
             document.getElementById('out-section').textContent = SECTIONS[selectedIndex] + ' mm²';
             document.getElementById('out-iz').textContent = Iz.toFixed(1) + ' A';
-            document.getElementById('out-vdrop').textContent = vDropPct.toFixed(2) + ' %';
-            document.getElementById('out-vdrop').className = vDropPct > 4.0 ? 'text-xl font-mono font-semibold text-rose-500' : 'text-xl font-mono font-semibold text-amber-400';
+            document.getElementById('out-vdrop').textContent = finalVDropPct.toFixed(2) + ' %';
             
             statusBox.className = "mt-6 p-3 rounded border bg-emerald-900/30 border-emerald-800 text-emerald-400 text-xs";
-            statusBox.innerHTML = `✓ Sezione commerciale trovata ed applicabile per posa ${installation}.`;
+            statusBox.innerHTML = `✓ Sezione commerciale trovata (Portata garantita e &Delta;U &le; ${maxVDrop}%).`;
 
             // SYNC INTERRUTTORE
             document.getElementById('b-ib').value = Ib.toFixed(1);
@@ -119,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('out-vdrop').textContent = '-';
             
             statusBox.className = "mt-6 p-3 rounded border bg-rose-900/30 border-rose-800 text-rose-400 text-xs";
-            statusBox.innerHTML = `⚠ Corrente troppo elevata per singola corda. Prevedere posa in parallelo.`;
+            statusBox.innerHTML = `⚠ Corrente o &Delta;U fuori limite per singola corda. Aumentare tensione o prevedere posa in parallelo.`;
         }
     });
 
