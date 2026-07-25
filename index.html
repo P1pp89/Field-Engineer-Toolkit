@@ -4,133 +4,115 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Field Engineer Toolkit | CEI 64-8 & IEC 60364</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
-                extend: {
-                    colors: {
-                        brand: { 50: '#f0f9ff', 500: '#0284c7', 600: '#0369a1', 900: '#0c4a6e' }
-                    }
-                }
+                extend: { colors: { brand: { 50: '#f0f9ff', 500: '#0284c7', 600: '#0369a1', 900: '#0c4a6e' } } }
             }
         }
     </script>
     <link rel="stylesheet" href="./css/styles.css">
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
 
-    <!-- Header Navigation -->
     <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <i data-lucide="cpu" class="w-7 h-7 text-sky-400"></i>
                 <span class="font-bold text-xl tracking-tight text-white">FieldEng<span class="text-sky-400">Toolkit</span></span>
-                <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded font-mono">v1.0.0</span>
+                <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded font-mono">v1.1.0</span>
             </div>
-            
             <nav class="flex gap-2">
                 <button id="nav-cable" class="nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors">
-                    <i data-lucide="zap" class="w-4 h-4"></i> Cavi & CdT
+                    <i data-lucide="zap" class="w-4 h-4"></i> Cavi
                 </button>
                 <button id="nav-breaker" class="nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors">
-                    <i data-lucide="shield-alert" class="w-4 h-4"></i> Interruttori
+                    <i data-lucide="shield-alert" class="w-4 h-4"></i> Protezioni
                 </button>
             </nav>
         </div>
     </header>
 
-    <!-- Main Content Area -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
         
-        <!-- Module 1: Dimensionamento Cavo -->
+        <!-- ========================================== -->
+        <!-- MODULO 1: CAVI (Invariato nella UI)        -->
+        <!-- ========================================== -->
         <section id="module-cable" class="module-section">
             <div class="mb-6">
                 <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-                    Dimensionamento Linee Elettriche <span class="text-xs font-normal bg-sky-950 text-sky-300 border border-sky-800 px-2 py-1 rounded">CEI 64-8 / IEC 60364</span>
+                    Dimensionamento Linee Elettriche <span class="text-xs font-normal bg-sky-950 text-sky-300 border border-sky-800 px-2 py-1 rounded">CEI 64-8</span>
                 </h1>
-                <p class="text-slate-400 text-sm">Calcolo della sezione minima conduttore per portata termica (Iz) e caduta di tensione (&Delta;U).</p>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- Input Panel -->
                 <div class="lg:col-span-5 bg-slate-800/80 border border-slate-700/80 p-5 rounded-xl backdrop-blur">
-                    <h2 class="text-md font-semibold text-sky-400 mb-4 uppercase tracking-wider text-xs">Parametri di Progetto</h2>
-                    
                     <form id="cable-form" class="space-y-4">
                         <div>
                             <label class="block text-xs font-medium text-slate-300 mb-1">Sistema di Alimentazione</label>
                             <select id="c-system" class="form-input">
-                                <option value="3PH">Trifase + Neutro (400V)</option>
+                                <option value="3PH">Trifase + N (400V)</option>
                                 <option value="1PH">Monofase (230V)</option>
                             </select>
                         </div>
-
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Potenza Attiva P (kW)</label>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Potenza P (kW)</label>
                                 <input type="number" id="c-power" step="0.1" min="0.1" value="15" class="form-input" required>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Fattore di Potenza cos&phi;</label>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">cos&phi;</label>
                                 <input type="number" id="c-cosphi" step="0.01" min="0.5" max="1.0" value="0.9" class="form-input" required>
                             </div>
                         </div>
-
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Lunghezza Linea L (m)</label>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Lunghezza (m)</label>
                                 <input type="number" id="c-length" step="1" min="1" value="45" class="form-input" required>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">CdT Max Ammissibile &Delta;U (%)</label>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">CdT Max (%)</label>
                                 <input type="number" id="c-max-vdrop" step="0.1" min="0.5" max="10" value="4.0" class="form-input" required>
                             </div>
                         </div>
-
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Materiale Conduttore</label>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Materiale</label>
                                 <select id="c-material" class="form-input">
                                     <option value="Cu">Rame (Cu)</option>
                                     <option value="Al">Alluminio (Al)</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Isolante Conduttore</label>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Isolante</label>
                                 <select id="c-insulation" class="form-input">
-                                    <option value="EPR">EPR / XLPE (90°C)</option>
+                                    <option value="EPR">EPR/XLPE (90°C)</option>
                                     <option value="PVC">PVC (70°C)</option>
                                 </select>
                             </div>
                         </div>
-
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-slate-300 mb-1">Fattore Temp. K1</label>
                                 <input type="number" id="c-k1" step="0.01" min="0.5" max="1.5" value="1.00" class="form-input">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Fattore Raggrup. K2</label>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Fattore Ragg. K2</label>
                                 <input type="number" id="c-k2" step="0.01" min="0.3" max="1.0" value="0.80" class="form-input">
                             </div>
                         </div>
-
                         <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 mt-2">
                             <i data-lucide="calculator" class="w-4 h-4"></i> Calcola Sezione
                         </button>
                     </form>
                 </div>
 
-                <!-- Output Results Panel -->
                 <div class="lg:col-span-7 space-y-4">
                     <div class="bg-slate-800/80 border border-slate-700/80 p-5 rounded-xl backdrop-blur">
-                        <h2 class="text-md font-semibold text-slate-300 mb-4 uppercase tracking-wider text-xs">Risultati Verifica CEI 64-8</h2>
-                        
+                        <h2 class="text-md font-semibold text-slate-300 mb-4 uppercase tracking-wider text-xs">Risultati Linea</h2>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                             <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
                                 <span class="text-xs text-slate-400 block">Corrente Impiego (Ib)</span>
@@ -141,41 +123,20 @@
                                 <span id="out-section" class="text-2xl font-mono font-bold text-emerald-400">0 mm²</span>
                             </div>
                             <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
-                                <span class="text-xs text-slate-400 block">CdT Calcolata (&Delta;U)</span>
+                                <span class="text-xs text-slate-400 block">CdT (&Delta;U)</span>
                                 <span id="out-vdrop" class="text-2xl font-mono font-bold text-amber-400">0.0 %</span>
                             </div>
                         </div>
-
-                        <div id="cable-status-box" class="p-4 rounded-lg border mb-4 bg-slate-900/40 border-slate-700 text-slate-300 text-sm">
-                            Inserire i parametri e premere Calcola.
-                        </div>
-
-                        <!-- Technical Specs Table -->
+                        <div id="cable-status-box" class="p-4 rounded-lg border mb-4 bg-slate-900/40 border-slate-700 text-slate-300 text-sm">Attendere prego...</div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs font-mono text-slate-300">
                                 <thead class="bg-slate-900/80 uppercase text-slate-400 border-b border-slate-700">
-                                    <tr>
-                                        <th class="p-2.5">Parametro</th>
-                                        <th class="p-2.5">Valore</th>
-                                        <th class="p-2.5">Note / Limiti</th>
-                                    </tr>
+                                    <tr><th class="p-2.5">Parametro</th><th class="p-2.5">Valore</th><th class="p-2.5">Note</th></tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-700/50">
-                                    <tr>
-                                        <td class="p-2.5 font-sans">Portata Tabellare (Iz,tab)</td>
-                                        <td id="out-iz-tab" class="p-2.5 font-bold">-</td>
-                                        <td class="p-2.5 text-slate-400 font-sans">In aria/tubo a 30°C</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-2.5 font-sans">Portata Corretta (Iz = Iz,tab &middot; K1 &middot; K2)</td>
-                                        <td id="out-iz-corr" class="p-2.5 font-bold">-</td>
-                                        <td class="p-2.5 text-slate-400 font-sans">Condizione Iz &ge; Ib</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="p-2.5 font-sans">Caduta di Tensione Asso. (&Delta;Uv)</td>
-                                        <td id="out-vdrop-volts" class="p-2.5 font-bold">-</td>
-                                        <td class="p-2.5 text-slate-400 font-sans">Volt effettivi sulla linea</td>
-                                    </tr>
+                                    <tr><td class="p-2.5 font-sans">Iz,tab</td><td id="out-iz-tab" class="p-2.5 font-bold">-</td><td class="p-2.5 text-slate-400 font-sans">Portata in aria</td></tr>
+                                    <tr><td class="p-2.5 font-sans">Iz (Corretta)</td><td id="out-iz-corr" class="p-2.5 font-bold">-</td><td class="p-2.5 text-slate-400 font-sans">Iz &ge; Ib</td></tr>
+                                    <tr><td class="p-2.5 font-sans">&Delta;U (Volt)</td><td id="out-vdrop-volts" class="p-2.5 font-bold">-</td><td class="p-2.5 text-slate-400 font-sans">Volt effettivi</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -184,97 +145,107 @@
             </div>
         </section>
 
-        <!-- Module 2: Dimensionamento Interruttore -->
+        <!-- ========================================== -->
+        <!-- MODULO 2: INTERRUTTORI                     -->
+        <!-- ========================================== -->
         <section id="module-breaker" class="module-section hidden">
             <div class="mb-6">
                 <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-                    Dimensionamento e Verifica Interruttori Magnetotermici <span class="text-xs font-normal bg-sky-950 text-sky-300 border border-sky-800 px-2 py-1 rounded">CEI EN 60898-1 / 60947-2</span>
+                    Protezioni Magnetotermiche <span class="text-xs font-normal bg-sky-950 text-sky-300 border border-sky-800 px-2 py-1 rounded">Auto-Sync</span>
                 </h1>
-                <p class="text-slate-400 text-sm">Selezione della taglia nominale (In), verifica del coordinamento cavo e potere di interruzione (Icu).</p>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- Input Panel -->
                 <div class="lg:col-span-5 bg-slate-800/80 border border-slate-700/80 p-5 rounded-xl backdrop-blur">
-                    <h2 class="text-md font-semibold text-sky-400 mb-4 uppercase tracking-wider text-xs">Parametri Circuito e Guasto</h2>
-                    
                     <form id="breaker-form" class="space-y-4">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Corrente Impiego Ib (A)</label>
-                                <input type="number" id="b-ib" step="0.1" min="0.1" value="28.5" class="form-input" required>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Portata Cavo Iz (A)</label>
-                                <input type="number" id="b-iz" step="0.1" min="0.1" value="36.0" class="form-input" required>
+                        
+                        <!-- Dati Elettrici Sincronizzati -->
+                        <div class="p-3 bg-slate-900/50 rounded-lg border border-slate-700 mb-4">
+                            <span class="text-xs text-sky-400 uppercase tracking-wider font-semibold block mb-2">Dati Linea (Dal Modulo Cavi)</span>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1">Corrente Ib (A)</label>
+                                    <input type="number" id="b-ib" step="0.1" min="0.1" class="form-input bg-slate-800" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1">Portata Cavo Iz (A)</label>
+                                    <input type="number" id="b-iz" step="0.1" min="0.1" class="form-input bg-slate-800" required>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Heuristic Helper per Ikc -->
                         <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Icc Presunta al Punto di Installaz. Ikc (kA)</label>
+                            <div class="flex justify-between items-end mb-1">
+                                <label class="block text-xs font-medium text-slate-300">Icc Presunta (Ikc) in kA</label>
+                                <select id="b-ikc-helper" class="text-xs bg-slate-900 border border-slate-700 text-sky-400 rounded px-1 py-0.5 outline-none cursor-pointer">
+                                    <option value="">Stima rapida guasto...</option>
+                                    <option value="4.5">Circuito Terminale (Prese/Luce) - 4.5 kA</option>
+                                    <option value="6.0">Fornitura Rete Standard (CEI 0-21) - 6.0 kA</option>
+                                    <option value="10.0">Sottosquadro Distribuzione Primaria - 10 kA</option>
+                                    <option value="25.0">Vicinanza Cabina MT/BT (Trafo >400kVA) - 25 kA</option>
+                                </select>
+                            </div>
                             <input type="number" id="b-ikc" step="0.1" min="0.1" value="6.0" class="form-input" required>
                         </div>
 
+                        <!-- Select Ottimizzati -->
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Tipologia di Carico</label>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Tipo Carico</label>
                                 <select id="b-loadtype" class="form-input">
-                                    <option value="resistive">Resistivo / Generico (Curva C)</option>
-                                    <option value="motor">Motori / Spunto Elevato (Curva D)</option>
-                                    <option value="sensitive">Elettronica / Linee Lunghe (Curva B)</option>
+                                    <option value="resistive">Curva C (Generico)</option>
+                                    <option value="motor">Curva D (Motori)</option>
+                                    <option value="sensitive">Curva B (Linee lunghe)</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Standard Normativo</label>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Normativa</label>
                                 <select id="b-standard" class="form-input">
-                                    <option value="EN60898">Domestico/Similare (CEI EN 60898-1 - Icn)</option>
-                                    <option value="EN60947">Industriale (CEI EN 60947-2 - Icu)</option>
+                                    <option value="EN60898">60898-1 (Domestico)</option>
+                                    <option value="EN60947">60947-2 (Industria)</option>
                                 </select>
                             </div>
                         </div>
 
                         <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 mt-2">
-                            <i data-lucide="shield-check" class="w-4 h-4"></i> Verifica Interruttore
+                            <i data-lucide="shield-check" class="w-4 h-4"></i> Calcola Interruttore
                         </button>
                     </form>
                 </div>
 
-                <!-- Output Panel -->
                 <div class="lg:col-span-7 space-y-4">
                     <div class="bg-slate-800/80 border border-slate-700/80 p-5 rounded-xl backdrop-blur">
-                        <h2 class="text-md font-semibold text-slate-300 mb-4 uppercase tracking-wider text-xs">Interruttore Selezionato & Verificatione Protezione</h2>
+                        <h2 class="text-md font-semibold text-slate-300 mb-4 uppercase tracking-wider text-xs">Esito Coordinamento</h2>
                         
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                             <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
-                                <span class="text-xs text-slate-400 block">Taglia Nominale (In)</span>
+                                <span class="text-xs text-slate-400 block">Taglia (In)</span>
                                 <span id="out-in" class="text-2xl font-mono font-bold text-sky-400">- A</span>
                             </div>
                             <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
-                                <span class="text-xs text-slate-400 block">Curva d'Intervento</span>
+                                <span class="text-xs text-slate-400 block">Intervento</span>
                                 <span id="out-curve" class="text-2xl font-mono font-bold text-emerald-400">-</span>
                             </div>
                             <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
-                                <span class="text-xs text-slate-400 block">Potere Interruzione</span>
+                                <span class="text-xs text-slate-400 block">P. Interruzione</span>
                                 <span id="out-icu" class="text-2xl font-mono font-bold text-amber-400">- kA</span>
                             </div>
                         </div>
 
-                        <div id="breaker-status-box" class="p-4 rounded-lg border mb-4 bg-slate-900/40 border-slate-700 text-slate-300 text-sm">
-                            Compilare i parametri di linea per determinare l'interruttore idoneo.
-                        </div>
+                        <div id="breaker-status-box" class="p-4 rounded-lg border mb-4 bg-slate-900/40 border-slate-700 text-slate-300 text-sm">...</div>
 
-                        <!-- Coordination Rules Checklist -->
                         <div class="space-y-2 font-mono text-xs">
                             <div id="check-rule1" class="p-3 bg-slate-900/60 rounded border border-slate-700 flex items-center justify-between">
-                                <span>1. Regola Sovraccarico: Ib &le; In &le; Iz</span>
+                                <span>1. Sovraccarico: Ib &le; In &le; Iz</span>
                                 <span class="font-bold text-slate-400" id="val-rule1">-</span>
                             </div>
                             <div id="check-rule2" class="p-3 bg-slate-900/60 rounded border border-slate-700 flex items-center justify-between">
-                                <span>2. Regola Corrente Convenzionale: I2 &le; 1.45 &middot; Iz</span>
+                                <span>2. Conv.: I2 &le; 1.45 &middot; Iz</span>
                                 <span class="font-bold text-slate-400" id="val-rule2">-</span>
                             </div>
                             <div id="check-rule3" class="p-3 bg-slate-900/60 rounded border border-slate-700 flex items-center justify-between">
-                                <span>3. Potere di Interruzione: Icu &ge; Ikc</span>
+                                <span>3. Cortocircuito: Icu &ge; Ikc</span>
                                 <span class="font-bold text-slate-400" id="val-rule3">-</span>
                             </div>
                         </div>
@@ -282,13 +253,12 @@
                 </div>
             </div>
         </section>
-
     </main>
 
     <footer class="bg-slate-800 border-t border-slate-700 py-4 text-center text-xs text-slate-500">
-        <p>Field Engineer Toolkit &copy; 2026 &mdash; Static Engineering Web App for GitHub Pages</p>
+        <p>Field Engineer Toolkit &copy; 2026</p>
     </footer>
 
-    <script type="module" src="./js/app.js"></script>
+    <script src="./js/app.js"></script>
 </body>
 </html>
