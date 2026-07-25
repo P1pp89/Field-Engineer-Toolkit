@@ -1,8 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Forza il rendering scuro nativo del browser per input, select e scrollbar */
+:root {
+    color-scheme: dark;
+}
+
 @layer components {
+    /* Stile per gli input di testo/numero e le select */
     .form-input {
-        @apply w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all;
+        @apply w-full border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 transition-all;
+        background-color: #0f172a !important; /* slate-900 esplicito */
+        color: #f8fafc !important; /* slate-50 esplicito */
     }
-    
+
+    .form-input:focus {
+        @apply outline-none ring-2 ring-sky-500 border-transparent;
+        background-color: #0f172a !important;
+    }
+
+    /* Stile specifico per le opzioni dei menu a tendina (<select>) */
+    .form-input option {
+        background-color: #0f172a !important;
+        color: #f8fafc !important;
+    }
+
+    /* Bottoni di navigazione tab */
     .nav-btn {
         @apply text-slate-400 hover:text-slate-200 hover:bg-slate-700/50;
     }
