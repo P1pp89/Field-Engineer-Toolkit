@@ -1,7 +1,8 @@
 // ==========================================
-// CORE 1: CABLE SIZING (Tabellare + Vincolo Cdt)
+// CORE 1: CABLE SIZING (Tabellare + Vincolo Cdt Termico CEI 64-8)
 // ==========================================
 const SECTIONS = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150];
+
 const AMPACITY_TABLES = {
     'Cu-PVC': {
         'B1': [13.5, 18.5, 24, 31, 42, 56, 73, 89, 108, 136, 164, 188, 216],
@@ -14,7 +15,14 @@ const AMPACITY_TABLES = {
         'E':  [23.0, 32.0, 42, 54, 75, 100, 127, 158, 192, 246, 298, 346, 399]
     }
 };
-const RESISTIVITY = { Cu: 0.0178, Al: 0.0282 };
+
+// Resistività corretta a temperatura di esercizio [Ohm * mm^2 / m]
+// Cu a 70°C (PVC) = ~0.0225 | Cu a 90°C (EPR/XLPE) = ~0.0247 | Al a 90°C = ~0.036
+const RESISTIVITY_THERMAL = {
+    'Cu-PVC': 0.0225,
+    'Cu-EPR': 0.0247,
+    'Al-EPR': 0.0360
+};
 
 // ==========================================
 // CORE 2: BREAKER SIZING
@@ -88,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // -- FORM CAVO (SINCRIZZA ANCHE L'ANELLO DI GUASTO) --
+    // -- FORM CAVO --
     document.getElementById('cable-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const powerKw = parseFloat(document.getElementById('c-power').value) || 0;
@@ -106,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const material = cableType.split('-')[0];
         const tableRef = material === 'Al' ? 'Cu-EPR' : cableType; 
         const izArray = AMPACITY_TABLES[tableRef][installation];
-        const rho = RESISTIVITY[material];
+        const rho = RESISTIVITY_THERMAL[cableType] || 0.0225;
         
         let selectedIndex = -1, Iz = 0, finalVDropPct = 0;
 
@@ -147,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const computedIn = STANDARD_IN.find(In => In >= Ib && In <= Iz) || STANDARD_IN.find(In => In >= Ib) || 16;
             document.getElementById('f-in').value = computedIn;
             const loadTypeVal = document.getElementById('b-loadtype').value;
-            const curveVal = loadTypeVal === 'motor' ? 'D' : (loadTypeVal === 'sensitive' ? 'B' : 'C');
+            const curveVal = loadTypeVal === 'motor' ? 'D' : (loadType === 'sensitive' ? 'B' : 'C');
             document.getElementById('f-curve').value = curveVal;
 
             document.getElementById('fault-form').dispatchEvent(new Event('submit'));
@@ -203,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
             statusBox.innerHTML = `<strong>⚠ Attenzione:</strong> Parametri normativi violati.`;
         }
 
-        // AGGIORNA ANCHE IL MODULO ANELLO DI GUASTO SE CAMBIA LA PROTEZIONE
         document.getElementById('f-in').value = selectedIn || 16;
         document.getElementById('f-curve').value = curve;
         document.getElementById('fault-form').dispatchEvent(new Event('submit'));
@@ -222,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const IaMultiplier = curveMultipliers[curve] || 10;
         const Ia = In * IaMultiplier;
 
-        const rho = RESISTIVITY['Cu'];
+        const rho = 0.0225; // Standard rame a temperatura di esercizio
         const R = (2 * rho * L) / S; 
         const X = 0.00008 * L;      
         const Zs = Math.sqrt(R*R + X*X);
