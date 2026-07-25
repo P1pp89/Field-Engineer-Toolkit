@@ -26,12 +26,11 @@ const STANDARD_ICU = [4.5, 6, 10, 15, 25, 36, 50, 70];
 // CORE 3: SCHEMA UNIFILARE STATE (TREE)
 // ==========================================
 let unifilareNodes = [
-    { id: 'node_1', name: 'Quadro Generale', in: 100, curve: 'MCCB', parentId: '' },
-    { id: 'node_2', name: 'Linea FM Officina', in: 32, curve: 'C', parentId: 'node_1' },
-    { id: 'node_3', name: 'Linea Luci Reparto', in: 16, curve: 'C', parentId: 'node_1' }
+    { id: 'node_1', name: 'Quadro Generale', in: 100, devType: 'MT', curve: 'C', parentId: '' },
+    { id: 'node_2', name: 'Linea FM Officina', in: 32, devType: 'MTR', curve: 'C', parentId: 'node_1' },
+    { id: 'node_3', name: 'Linea Luci Reparto', in: 16, devType: 'MT', curve: 'B', parentId: 'node_1' }
 ];
 
-// Inizializzazione Mermaid
 if (window.mermaid) {
     mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
 }
@@ -42,7 +41,7 @@ if (window.mermaid) {
 document.addEventListener('DOMContentLoaded', () => {
     if (window.lucide) window.lucide.createIcons();
 
-    // -- NAVIGAZIONE TAB (3 moduli) --
+    // -- NAVIGAZIONE TAB --
     const navCableBtn = document.getElementById('nav-cable');
     const navBreakerBtn = document.getElementById('nav-breaker');
     const navDiagramBtn = document.getElementById('nav-diagram');
@@ -66,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (target === 'diagram') {
             navDiagramBtn.className = "nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-sky-600/20 text-sky-400 border border-sky-500/30";
             moduleDiagram.classList.remove('hidden');
-            renderUnifilare(); // Renderizza all'apertura del tab
+            renderUnifilare();
         }
     }
 
@@ -147,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const Ib = parseFloat(document.getElementById('b-ib').value) || 0;
         const Iz = parseFloat(document.getElementById('b-iz').value) || 0;
         const Ikc = parseFloat(document.getElementById('b-ikc').value) || 6.0;
+        const deviceType = document.getElementById('b-device-type').value;
         const loadType = document.getElementById('b-loadtype').value;
 
         let selectedIn = STANDARD_IN.find(In => In >= Ib && In <= Iz) || STANDARD_IN.find(In => In >= Ib) || null;
@@ -157,8 +157,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const rule2 = selectedIn ? ((1.45 * selectedIn) <= (1.45 * Iz)) : false; 
         const rule3 = selectedIcu >= Ikc;
 
+        let typeLabel = deviceType === 'MTR' ? 'Mag-Diff' : (deviceType === 'DIFF' ? 'Diff. Puro' : (deviceType === 'MAG' ? 'Solo Mag.' : 'Magnetotermico'));
+
         document.getElementById('out-in').textContent = selectedIn ? `${selectedIn} A` : 'O.R.';
-        document.getElementById('out-curve').textContent = curve;
+        document.getElementById('out-curve').textContent = `${typeLabel} (${curve})`;
         document.getElementById('out-icu').textContent = `${selectedIcu} kA`;
 
         const updateCheck = (cId, vId, isOk, text) => {
@@ -183,14 +185,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================
-    // LOGICA MODULO 3: SCHEMA UNIFILARE
+    // LOGICA MODULO 3: SCHEMA UNIFILARE (FIXED)
     // ==========================================
     const modal = document.getElementById('node-modal');
     const btnAddNode = document.getElementById('btn-add-node');
     const modalCancel = document.getElementById('modal-cancel');
-    const nodeForm =- document.getElementById('node-form');
+    const nodeForm = document.getElementById('node-form');
 
-    btnAddNode.addEventListener('click', () => {
+    btnAddNode.addEventListener('click', (e) => {
+        e.preventDefault();
         document.getElementById('modal-title').textContent = 'Aggiungi Dispositivo';
         document.getElementById('node-edit-id').value = '';
         document.getElementById('n-name').value = '';
@@ -199,7 +202,10 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('hidden');
     });
 
-    modalCancel.addEventListener('click', () => modal.classList.add('hidden'));
+    modalCancel.addEventListener('click', (e) => {
+        e.preventDefault();
+        modal.classList.add('hidden');
+    });
 
     function populateParentSelect(excludeId = '') {
         const select = document.getElementById('n-parent');
@@ -212,18 +218,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     nodeForm.addEventListener('submit', (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Impedisce il refresh della pagina e il cambio tab indesiderato
+        
         const editId = document.getElementById('node-edit-id').value;
         const name = document.getElementById('n-name').value;
         const inVal = parseInt(document.getElementById('n-in').value);
+        const devType = document.getElementById('n-devtype').value;
         const curve = document.getElementById('n-curve').value;
         const parentId = document.getElementById('n-parent').value;
 
         if (editId) {
             const node = unifilareNodes.find(n => n.id === editId);
-            if (node) { node.name = name; node.in = inVal; node.curve = curve; node.parentId = parentId; }
+            if (node) { node.name = name; node.in = inVal; node.devType = devType; node.curve = curve; node.parentId = parentId; }
         } else {
-            const newNode = { id: 'node_' + Date.now(), name, in: inVal, curve, parentId };
+            const newNode = { id: 'node_' + Date.now(), name, in: inVal, devType, curve, parentId };
             unifilareNodes.push(newNode);
         }
 
@@ -239,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('node-edit-id').value = node.id;
         document.getElementById('n-name').value = node.name;
         document.getElementById('n-in').value = node.in;
+        document.getElementById('n-devtype').value = node.devType || 'MT';
         document.getElementById('n-curve').value = node.curve;
         populateParentSelect(node.id);
         document.getElementById('n-parent').value = node.parentId;
@@ -262,17 +271,18 @@ document.addEventListener('DOMContentLoaded', () => {
         unifilareNodes.forEach(node => {
             const parent = unifilareNodes.find(p => p.id === node.parentId);
             const parentName = parent ? parent.name : 'Alimentazione Principale';
+            let labelType = node.devType === 'MTR' ? 'Mag-Diff' : (node.devType === 'DIFF' ? 'Diff. Puro' : (node.devType === 'MAG' ? 'Solo Mag.' : 'Magnetotermico'));
 
             listContainer.innerHTML += `
                 <div class="bg-slate-900/60 border border-slate-700/60 p-3 rounded-lg flex items-center justify-between text-xs font-mono">
                     <div>
                         <strong class="text-white block font-sans">${node.name}</strong>
-                        <span class="text-sky-400">In: ${node.in}A</span> | <span class="text-emerald-400">Curva ${node.curve}</span>
+                        <span class="text-sky-400">In: ${node.in}A</span> | <span class="text-emerald-400">${labelType} (${node.curve})</span>
                         <div class="text-[10px] text-slate-500 font-sans mt-0.5">Monte: ${parentName}</div>
                     </div>
                     <div class="flex gap-1.5">
-                        <button onclick="editNode('${node.id}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
-                        <button onclick="deleteNode('${node.id}')" class="p-1.5 bg-rose-950/50 hover:bg-rose-900 text-rose-400 rounded"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        <button type="button" onclick="editNode('${node.id}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                        <button type="button" onclick="deleteNode('${node.id}')" class="p-1.5 bg-rose-950/50 hover:bg-rose-900 text-rose-400 rounded"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                     </div>
                 </div>
             `;
@@ -289,7 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
             diagram += "empty[Nessun componente inserito]\n";
         } else {
             unifilareNodes.forEach(node => {
-                let label = `${node.name}<br/><b>In: ${node.in}A</b><br/>(${node.curve})`;
+                let labelType = node.devType === 'MTR' ? 'Mag-Diff' : (node.devType === 'DIFF' ? 'Diff. Puro' : (node.devType === 'MAG' ? 'Solo Mag.' : 'MT'));
+                let label = `${node.name}<br/><b>In: ${node.in}A</b><br/>(${labelType} - ${node.curve})`;
                 diagram += `${node.id}["${label}"]\n`;
                 if (!node.parentId) {
                     diagram += `class ${node.id} root;\n`;
@@ -313,7 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Inizializzazione iniziale lista e calcoli
     renderUnifilareList();
     document.getElementById('cable-form').dispatchEvent(new Event('submit'));
 });

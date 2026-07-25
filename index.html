@@ -13,7 +13,7 @@
     </script>
     <link rel="stylesheet" href="./css/styles.css">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Mermaid.js CDN per il rendering degli schemi unifilari -->
+    <!-- Mermaid.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
@@ -26,13 +26,13 @@
                 <span class="font-bold text-lg tracking-tight text-white">FieldEng<span class="text-sky-400">Toolkit</span></span>
             </div>
             <nav class="flex gap-2">
-                <button id="nav-cable" class="nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-sky-600/20 text-sky-400 border border-sky-500/30">
+                <button id="nav-cable" type="button" class="nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-sky-600/20 text-sky-400 border border-sky-500/30">
                     <i data-lucide="zap" class="w-4 h-4"></i> Cavi
                 </button>
-                <button id="nav-breaker" class="nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200">
+                <button id="nav-breaker" type="button" class="nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200">
                     <i data-lucide="shield-alert" class="w-4 h-4"></i> Protezioni
                 </button>
-                <button id="nav-diagram" class="nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200">
+                <button id="nav-diagram" type="button" class="nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200">
                     <i data-lucide="git-merge" class="w-4 h-4"></i> Unifilare
                 </button>
             </nav>
@@ -191,11 +191,20 @@
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-medium text-slate-300 mb-1">Tipo Carico</label>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Tipologia Dispositivo</label>
+                                <select id="b-device-type" class="form-input">
+                                    <option value="MT">Magnetotermico Puro (MCB)</option>
+                                    <option value="MTR">Magnetotermico Differenziale (RCBO)</option>
+                                    <option value="DIFF">Differenziale Puro (RCCB)</option>
+                                    <option value="MAG">Solo Magnetico (Avviatore)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Curva d'Intervento</label>
                                 <select id="b-loadtype" class="form-input">
-                                    <option value="resistive">Curva C</option>
-                                    <option value="motor">Curva D</option>
-                                    <option value="sensitive">Curva B</option>
+                                    <option value="resistive">Curva C (Generico)</option>
+                                    <option value="motor">Curva D (Motori)</option>
+                                    <option value="sensitive">Curva B (Elettronica)</option>
                                 </select>
                             </div>
                         </div>
@@ -215,7 +224,7 @@
                                 <span id="out-in" class="text-2xl font-mono font-bold text-sky-400">- A</span>
                             </div>
                             <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
-                                <span class="text-xs text-slate-400 block">Curva</span>
+                                <span class="text-xs text-slate-400 block">Tipo & Curva</span>
                                 <span id="out-curve" class="text-2xl font-mono font-bold text-emerald-400">-</span>
                             </div>
                             <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
@@ -243,7 +252,7 @@
         </section>
 
         <!-- ========================================== -->
-        <!-- MODULO 3: SCHEMA UNIFILARE (MERMAID)       -->
+        <!-- MODULO 3: SCHEMA UNIFILARE                 -->
         <!-- ========================================== -->
         <section id="module-diagram" class="module-section hidden">
             <div class="mb-6 flex justify-between items-center">
@@ -252,36 +261,30 @@
                         Schema Unifilare <span class="text-xs font-normal bg-sky-950 text-sky-300 border border-sky-800 px-2 py-1 rounded">Gerarchia Monte/Valle</span>
                     </h1>
                 </div>
-                <button id="btn-add-node" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors">
+                <button id="btn-add-node" type="button" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors">
                     <i data-lucide="plus" class="w-4 h-4"></i> Aggiungi Dispositivo
                 </button>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- Lista Dispositivi / Gestione Albero -->
                 <div class="lg:col-span-5 bg-slate-800/80 border border-slate-700/80 p-5 rounded-xl space-y-4">
                     <h2 class="text-xs font-semibold text-sky-400 uppercase tracking-wider">Elenco Interruttori Configurati</h2>
-                    <div id="nodes-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-                        <!-- Popolato dinamicamente da JS -->
-                    </div>
+                    <div id="nodes-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-1"></div>
                 </div>
 
-                <!-- Area di Rendering Mermaid -->
                 <div class="lg:col-span-7 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden flex flex-col">
                     <div class="bg-slate-800 px-4 py-2 border-b border-slate-700 flex justify-between items-center">
                         <span class="text-xs font-semibold text-slate-300 uppercase">Anteprima Unifilare SVG</span>
                         <span class="text-[10px] text-emerald-400 font-mono">Live Render</span>
                     </div>
-                    <div id="diagram-container" class="p-6 flex-1 flex items-center justify-center overflow-auto min-h-[400px] bg-slate-950/50">
-                        <!-- Mermaid inietta qui il grafo -->
-                    </div>
+                    <div id="diagram-container" class="p-6 flex-1 flex items-center justify-center overflow-auto min-h-[400px] bg-slate-950/50"></div>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- Modale Semplice per Aggiunta/Modifica Nodo -->
+    <!-- Modale Semplice (Fissato tipo type="button") -->
     <div id="node-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-xl max-w-md w-full p-6 shadow-2xl">
             <h3 id="modal-title" class="text-lg font-bold text-white mb-4">Nuovo Dispositivo</h3>
@@ -297,20 +300,30 @@
                         <input type="number" id="n-in" value="32" class="form-input" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Curva / Tipo</label>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Tipologia</label>
+                        <select id="n-devtype" class="form-input">
+                            <option value="MT">Magnetotermico</option>
+                            <option value="MTR">Mag. Differenziale</option>
+                            <option value="DIFF">Differenziale Puro</option>
+                            <option value="MAG">Solo Magnetico</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Curva</label>
                         <select id="n-curve" class="form-input">
                             <option value="C">Curva C</option>
                             <option value="D">Curva D</option>
                             <option value="B">Curva B</option>
-                            <option value="MCCB">Scatolato MCCB</option>
                         </select>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">Dispositivo a Monte</label>
-                    <select id="n-parent" class="form-input">
-                        <option value="">Nessuno (Radice / Generale)</option>
-                    </select>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Dispositivo a Monte</label>
+                        <select id="n-parent" class="form-input">
+                            <option value="">Nessuno (Radice)</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="flex gap-3 pt-2">
                     <button type="button" id="modal-cancel" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2 rounded-lg text-sm font-medium transition-colors">Annulla</button>
