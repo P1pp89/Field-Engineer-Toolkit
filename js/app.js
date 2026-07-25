@@ -23,33 +23,56 @@ const STANDARD_IN = [6, 10, 13, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 2
 const STANDARD_ICU = [4.5, 6, 10, 15, 25, 36, 50, 70];
 
 // ==========================================
+// CORE 3: SCHEMA UNIFILARE STATE (TREE)
+// ==========================================
+let unifilareNodes = [
+    { id: 'node_1', name: 'Quadro Generale', in: 100, curve: 'MCCB', parentId: '' },
+    { id: 'node_2', name: 'Linea FM Officina', in: 32, curve: 'C', parentId: 'node_1' },
+    { id: 'node_3', name: 'Linea Luci Reparto', in: 16, curve: 'C', parentId: 'node_1' }
+];
+
+// Inizializzazione Mermaid
+if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+}
+
+// ==========================================
 // DOM INTERACTION & EVENT LISTENERS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     if (window.lucide) window.lucide.createIcons();
 
-    // -- NAVIGAZIONE TAB --
+    // -- NAVIGAZIONE TAB (3 moduli) --
     const navCableBtn = document.getElementById('nav-cable');
     const navBreakerBtn = document.getElementById('nav-breaker');
+    const navDiagramBtn = document.getElementById('nav-diagram');
+    
     const moduleCable = document.getElementById('module-cable');
     const moduleBreaker = document.getElementById('module-breaker');
+    const moduleDiagram = document.getElementById('module-diagram');
 
-    function switchTab(showCable) {
-        if (showCable) {
+    function switchTab(target) {
+        [navCableBtn, navBreakerBtn, navDiagramBtn].forEach(btn => {
+            btn.className = "nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200";
+        });
+        [moduleCable, moduleBreaker, moduleDiagram].forEach(mod => mod.classList.add('hidden'));
+
+        if (target === 'cable') {
             navCableBtn.className = "nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-sky-600/20 text-sky-400 border border-sky-500/30";
-            navBreakerBtn.className = "nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200";
             moduleCable.classList.remove('hidden');
-            moduleBreaker.classList.add('hidden');
-        } else {
+        } else if (target === 'breaker') {
             navBreakerBtn.className = "nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-sky-600/20 text-sky-400 border border-sky-500/30";
-            navCableBtn.className = "nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200";
             moduleBreaker.classList.remove('hidden');
-            moduleCable.classList.add('hidden');
+        } else if (target === 'diagram') {
+            navDiagramBtn.className = "nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-sky-600/20 text-sky-400 border border-sky-500/30";
+            moduleDiagram.classList.remove('hidden');
+            renderUnifilare(); // Renderizza all'apertura del tab
         }
     }
 
-    navCableBtn.addEventListener('click', () => switchTab(true));
-    navBreakerBtn.addEventListener('click', () => switchTab(false));
+    navCableBtn.addEventListener('click', () => switchTab('cable'));
+    navBreakerBtn.addEventListener('click', () => switchTab('breaker'));
+    navDiagramBtn.addEventListener('click', () => switchTab('diagram'));
 
     // -- HELPER IKC INTERRUTTORE --
     document.getElementById('b-ikc-helper').addEventListener('change', (e) => {
@@ -59,18 +82,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // -- FORM CAVO (SUBMIT MANUALE) --
+    // -- FORM CAVO --
     document.getElementById('cable-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        
         const powerKw = parseFloat(document.getElementById('c-power').value) || 0;
         const voltage = parseInt(document.getElementById('c-system').value) || 400;
         const cableType = document.getElementById('c-type').value;
         const installation = document.getElementById('c-installation').value;
         const length = parseFloat(document.getElementById('c-length').value) || 1;
         const cosphi = parseFloat(document.getElementById('c-cosphi').value) || 0.9;
-        
-        // Lettura e limitazione del parametro Cdt Max al 4%
         let requestedVDrop = parseFloat(document.getElementById('c-max-vdrop').value) || 4.0;
         const maxVDrop = Math.min(requestedVDrop, 4.0);
 
@@ -82,14 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const izArray = AMPACITY_TABLES[tableRef][installation];
         const rho = RESISTIVITY[material];
         
-        let selectedIndex = -1;
-        let Iz = 0;
-        let finalVDropPct = 0;
+        let selectedIndex = -1, Iz = 0, finalVDropPct = 0;
 
-        // Ricerca con validazione termica E validazione cdt
         for (let i = 0; i < SECTIONS.length; i++) {
             if (material === 'Al' && SECTIONS[i] < 16) continue;
-            
             const currentIz = material === 'Al' ? izArray[i] * 0.78 : izArray[i];
             
             if (currentIz >= Ib) {
@@ -98,15 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const currentVDropPct = (currentVDrop / voltage) * 100;
                 
                 if (currentVDropPct <= maxVDrop) {
-                    selectedIndex = i; 
-                    Iz = currentIz; 
-                    finalVDropPct = currentVDropPct;
-                    break;
+                    selectedIndex = i; Iz = currentIz; finalVDropPct = currentVDropPct; break;
                 }
             }
         }
 
-        // Output UI Cavo
         document.getElementById('out-ib').textContent = Ib.toFixed(1) + ' A';
         const statusBox = document.getElementById('cable-status-box');
 
@@ -114,11 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('out-section').textContent = SECTIONS[selectedIndex] + ' mm²';
             document.getElementById('out-iz').textContent = Iz.toFixed(1) + ' A';
             document.getElementById('out-vdrop').textContent = finalVDropPct.toFixed(2) + ' %';
-            
             statusBox.className = "mt-6 p-3 rounded border bg-emerald-900/30 border-emerald-800 text-emerald-400 text-xs";
-            statusBox.innerHTML = `✓ Sezione commerciale trovata (Portata garantita e &Delta;U &le; ${maxVDrop}%).`;
+            statusBox.innerHTML = `✓ Sezione commerciale trovata (&Delta;U &le; ${maxVDrop}%).`;
 
-            // SYNC INTERRUTTORE
             document.getElementById('b-ib').value = Ib.toFixed(1);
             document.getElementById('b-iz').value = Iz.toFixed(1);
             document.getElementById('breaker-form').dispatchEvent(new Event('submit'));
@@ -126,16 +136,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('out-section').textContent = '> 150 mm²';
             document.getElementById('out-iz').textContent = 'O.R.';
             document.getElementById('out-vdrop').textContent = '-';
-            
             statusBox.className = "mt-6 p-3 rounded border bg-rose-900/30 border-rose-800 text-rose-400 text-xs";
-            statusBox.innerHTML = `⚠ Corrente o &Delta;U fuori limite per singola corda. Aumentare tensione o prevedere posa in parallelo.`;
+            statusBox.innerHTML = `⚠ Parametri fuori limite per singola corda.`;
         }
     });
 
-    // -- FORM INTERRUTTORE (SUBMIT MANUALE / AUTO-SYNC) --
+    // -- FORM INTERRUTTORE --
     document.getElementById('breaker-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        
         const Ib = parseFloat(document.getElementById('b-ib').value) || 0;
         const Iz = parseFloat(document.getElementById('b-iz').value) || 0;
         const Ikc = parseFloat(document.getElementById('b-ikc').value) || 6.0;
@@ -173,4 +181,139 @@ document.addEventListener('DOMContentLoaded', () => {
             statusBox.innerHTML = `<strong>⚠ Attenzione:</strong> Parametri normativi violati.`;
         }
     });
+
+    // ==========================================
+    // LOGICA MODULO 3: SCHEMA UNIFILARE
+    // ==========================================
+    const modal = document.getElementById('node-modal');
+    const btnAddNode = document.getElementById('btn-add-node');
+    const modalCancel = document.getElementById('modal-cancel');
+    const nodeForm =- document.getElementById('node-form');
+
+    btnAddNode.addEventListener('click', () => {
+        document.getElementById('modal-title').textContent = 'Aggiungi Dispositivo';
+        document.getElementById('node-edit-id').value = '';
+        document.getElementById('n-name').value = '';
+        document.getElementById('n-in').value = '32';
+        populateParentSelect();
+        modal.classList.remove('hidden');
+    });
+
+    modalCancel.addEventListener('click', () => modal.classList.add('hidden'));
+
+    function populateParentSelect(excludeId = '') {
+        const select = document.getElementById('n-parent');
+        select.innerHTML = '<option value="">Nessuno (Radice / Generale)</option>';
+        unifilareNodes.forEach(n => {
+            if (n.id !== excludeId) {
+                select.innerHTML += `<option value="${n.id}">${n.name} (${n.in}A)</option>`;
+            }
+        });
+    }
+
+    nodeForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('node-edit-id').value;
+        const name = document.getElementById('n-name').value;
+        const inVal = parseInt(document.getElementById('n-in').value);
+        const curve = document.getElementById('n-curve').value;
+        const parentId = document.getElementById('n-parent').value;
+
+        if (editId) {
+            const node = unifilareNodes.find(n => n.id === editId);
+            if (node) { node.name = name; node.in = inVal; node.curve = curve; node.parentId = parentId; }
+        } else {
+            const newNode = { id: 'node_' + Date.now(), name, in: inVal, curve, parentId };
+            unifilareNodes.push(newNode);
+        }
+
+        modal.classList.add('hidden');
+        renderUnifilareList();
+        renderUnifilare();
+    });
+
+    window.editNode = function(id) {
+        const node = unifilareNodes.find(n => n.id === id);
+        if (!node) return;
+        document.getElementById('modal-title').textContent = 'Modifica Dispositivo';
+        document.getElementById('node-edit-id').value = node.id;
+        document.getElementById('n-name').value = node.name;
+        document.getElementById('n-in').value = node.in;
+        document.getElementById('n-curve').value = node.curve;
+        populateParentSelect(node.id);
+        document.getElementById('n-parent').value = node.parentId;
+        modal.classList.remove('hidden');
+    };
+
+    window.deleteNode = function(id) {
+        unifilareNodes = unifilareNodes.filter(n => n.id !== id && n.parentId !== id);
+        renderUnifilareList();
+        renderUnifilare();
+    };
+
+    function renderUnifilareList() {
+        const listContainer = document.getElementById('nodes-list');
+        listContainer.innerHTML = '';
+        if (unifilareNodes.length === 0) {
+            listContainer.innerHTML = '<p class="text-xs text-slate-500 italic">Nessun dispositivo inserito.</p>';
+            return;
+        }
+
+        unifilareNodes.forEach(node => {
+            const parent = unifilareNodes.find(p => p.id === node.parentId);
+            const parentName = parent ? parent.name : 'Alimentazione Principale';
+
+            listContainer.innerHTML += `
+                <div class="bg-slate-900/60 border border-slate-700/60 p-3 rounded-lg flex items-center justify-between text-xs font-mono">
+                    <div>
+                        <strong class="text-white block font-sans">${node.name}</strong>
+                        <span class="text-sky-400">In: ${node.in}A</span> | <span class="text-emerald-400">Curva ${node.curve}</span>
+                        <div class="text-[10px] text-slate-500 font-sans mt-0.5">Monte: ${parentName}</div>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button onclick="editNode('${node.id}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="deleteNode('${node.id}')" class="p-1.5 bg-rose-950/50 hover:bg-rose-900 text-rose-400 rounded"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    async function renderUnifilare() {
+        let diagram = "graph TD\n";
+        diagram += "classDef default fill:#0f172a,stroke:#334155,stroke-width:2px,color:#f8fafc;\n";
+        diagram += "classDef root fill:#0c4a6e,stroke:#0284c7,stroke-width:2px,color:#f8fafc;\n";
+
+        if (unifilareNodes.length === 0) {
+            diagram += "empty[Nessun componente inserito]\n";
+        } else {
+            unifilareNodes.forEach(node => {
+                let label = `${node.name}<br/><b>In: ${node.in}A</b><br/>(${node.curve})`;
+                diagram += `${node.id}["${label}"]\n`;
+                if (!node.parentId) {
+                    diagram += `class ${node.id} root;\n`;
+                }
+            });
+
+            unifilareNodes.forEach(node => {
+                if (node.parentId) {
+                    diagram += `${node.parentId} --> ${node.id}\n`;
+                }
+            });
+        }
+
+        const container = document.getElementById('diagram-container');
+        try {
+            const id = 'mermaid_' + Date.now();
+            const { svg } = await mermaid.render(id, diagram);
+            container.innerHTML = svg;
+        } catch (e) {
+            container.innerHTML = `<span class="text-xs text-rose-400 font-mono">Errore di rendering dello schema.</span>`;
+        }
+    }
+
+    // Inizializzazione iniziale lista e calcoli
+    renderUnifilareList();
+    document.getElementById('cable-form').dispatchEvent(new Event('submit'));
 });
