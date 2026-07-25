@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // -- FORM CAVO --
+    // -- FORM CAVO (SINCRIZZA ANCHE L'ANELLO DI GUASTO) --
     document.getElementById('cable-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const powerKw = parseFloat(document.getElementById('c-power').value) || 0;
@@ -129,15 +129,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const statusBox = document.getElementById('cable-status-box');
 
         if (selectedIndex !== -1) {
-            document.getElementById('out-section').textContent = SECTIONS[selectedIndex] + ' mm²';
+            const sectionVal = SECTIONS[selectedIndex];
+            document.getElementById('out-section').textContent = sectionVal + ' mm²';
             document.getElementById('out-iz').textContent = Iz.toFixed(1) + ' A';
             document.getElementById('out-vdrop').textContent = finalVDropPct.toFixed(2) + ' %';
             statusBox.className = "mt-6 p-3 rounded border bg-emerald-900/30 border-emerald-800 text-emerald-400 text-xs";
             statusBox.innerHTML = `✓ Sezione commerciale trovata (&Delta;U &le; ${maxVDrop}%).`;
 
+            // SYNC INTERRUTTORE
             document.getElementById('b-ib').value = Ib.toFixed(1);
             document.getElementById('b-iz').value = Iz.toFixed(1);
             document.getElementById('breaker-form').dispatchEvent(new Event('submit'));
+
+            // SYNC ANELLO DI GUASTO (Z_s)
+            document.getElementById('f-length').value = length;
+            document.getElementById('f-section').value = sectionVal;
+            const computedIn = STANDARD_IN.find(In => In >= Ib && In <= Iz) || STANDARD_IN.find(In => In >= Ib) || 16;
+            document.getElementById('f-in').value = computedIn;
+            const loadTypeVal = document.getElementById('b-loadtype').value;
+            const curveVal = loadTypeVal === 'motor' ? 'D' : (loadTypeVal === 'sensitive' ? 'B' : 'C');
+            document.getElementById('f-curve').value = curveVal;
+
+            document.getElementById('fault-form').dispatchEvent(new Event('submit'));
         } else {
             document.getElementById('out-section').textContent = '> 150 mm²';
             document.getElementById('out-iz').textContent = 'O.R.';
@@ -177,9 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 : "p-3 bg-rose-950/30 rounded border border-rose-800/60 flex justify-between text-rose-400";
         };
 
-        updateCheck('check-rule1', 'val-rule1', rule1, `${Ib.toFixed(1)}A ≤ ${selectedIn||'?'}A ≤ ${Iz.toFixed(1)}A`);
+        updateCheck('check-rule1', 'val-rule1', rule1, `${Ib.toFixed(1)}A &le; ${selectedIn||'?'}A &le; ${Iz.toFixed(1)}A`);
         updateCheck('check-rule2', 'val-rule2', rule2, `Ok`);
-        updateCheck('check-rule3', 'val-rule3', rule3, `${selectedIcu}kA ≥ ${Ikc}kA`);
+        updateCheck('check-rule3', 'val-rule3', rule3, `${selectedIcu}kA &ge; ${Ikc}kA`);
 
         const statusBox = document.getElementById('breaker-status-box');
         if (rule1 && rule2 && rule3) {
@@ -189,11 +202,14 @@ document.addEventListener('DOMContentLoaded', () => {
             statusBox.className = "p-4 rounded-lg border mb-4 bg-amber-950/40 border-amber-800 text-amber-300 text-sm";
             statusBox.innerHTML = `<strong>⚠ Attenzione:</strong> Parametri normativi violati.`;
         }
+
+        // AGGIORNA ANCHE IL MODULO ANELLO DI GUASTO SE CAMBIA LA PROTEZIONE
+        document.getElementById('f-in').value = selectedIn || 16;
+        document.getElementById('f-curve').value = curve;
+        document.getElementById('fault-form').dispatchEvent(new Event('submit'));
     });
 
-    // ==========================================
-    // LOGICA MODULO 4: ANELLO DI GUASTO (Zs)
-    // ==========================================
+    // -- FORM ANELLO DI GUASTO (Zs) --
     document.getElementById('fault-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const U0 = parseFloat(document.getElementById('f-u0').value) || 230;
@@ -202,35 +218,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const In = parseFloat(document.getElementById('f-in').value) || 16;
         const curve = document.getElementById('f-curve').value;
 
-        // Moltiplicatore corrente magnetica (B=5, C=10, D=20)
         const curveMultipliers = { 'B': 5, 'C': 10, 'D': 20 };
         const IaMultiplier = curveMultipliers[curve] || 10;
         const Ia = In * IaMultiplier;
 
-        // Resistività Rame a 20°C e stima cavo fase+PE
         const rho = RESISTIVITY['Cu'];
-        const R = (2 * rho * L) / S; // Andata (Fase) + Ritorno (PE di pari sezione)
-        const X = 0.00008 * L;      // Reattanza stimata (~0.08 mOhm/m)
+        const R = (2 * rho * L) / S; 
+        const X = 0.00008 * L;      
         const Zs = Math.sqrt(R*R + X*X);
-
-        // Corrente di guasto minima Id = U0 / Zs
         const Id = U0 / Zs;
-
-        // Verifica condizione CEI 64-8 (Zs * Ia <= U0 oppure Id >= Ia)
         const isVerified = Id >= Ia;
 
         document.getElementById('out-zs').textContent = Zs.toFixed(3) + ' Ω';
         document.getElementById('out-id').textContent = Id.toFixed(1) + ' A';
         document.getElementById('val-ia').textContent = Ia.toFixed(1) + ' A';
-        document.getElementById('val-cond').textContent = (Zs * Ia).toFixed(1) + ' V (≤ ' + U0 + 'V)';
+        document.getElementById('val-cond').textContent = (Zs * Ia).toFixed(1) + ' V (\u2264 ' + U0 + 'V)';
 
         const statusBox = document.getElementById('fault-status-box');
         if (isVerified) {
             statusBox.className = "p-4 rounded-lg border mb-4 bg-emerald-950/40 border-emerald-800 text-emerald-300 text-sm";
-            statusBox.innerHTML = `<strong>✓ Protezione Garantita:</strong> La corrente di guasto ($I_d = ${Id.toFixed(1)}A$) supera la soglia magnetica ($I_a = ${Ia}A$). L'interruttore interverrà in tempo $\le 0.4\text{s}$.`;
+            statusBox.innerHTML = `<strong>✓ Protezione Garantita:</strong> La corrente di guasto (Id = ${Id.toFixed(1)}A) supera la soglia magnetica (Ia = ${Ia}A). Intervento &le; 0.4s.`;
         } else {
             statusBox.className = "p-4 rounded-lg border mb-4 bg-rose-950/40 border-rose-800 text-rose-300 text-sm";
-            statusBox.innerHTML = `<strong>✕ Attenzione:</strong> Linea troppo lunga o sezione inadeguata. $I_d$ insufficiente a garantire lo sgancio magnetico nei tempi prescritti. Ridurre la lunghezza o aumentare la sezione del PE.`;
+            statusBox.innerHTML = `<strong>✕ Attenzione:</strong> Id insufficiente a garantire lo sgancio magnetico nei tempi prescritti. Aumentare la sezione del PE.`;
         }
     });
 
