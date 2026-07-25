@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Engineer Toolkit | Modulo Linee</title>
+    <title>Field Engineer Toolkit | CEI 64-8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -11,119 +11,233 @@
             theme: { extend: { colors: { brand: { 500: '#0284c7' } } } }
         }
     </script>
-    <style>
-        :root { color-scheme: dark; }
-        .form-input {
-            width: 100%; border: 1px solid #334155; border-radius: 0.5rem; padding: 0.75rem; 
-            font-size: 0.875rem; color: #f8fafc; background-color: #0f172a !important; transition: all 0.2s;
-        }
-        .form-input:focus { outline: none; border-color: #0284c7; box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2); }
-        .form-input option { background-color: #0f172a; color: #f8fafc; }
-    </style>
+    <link rel="stylesheet" href="./css/styles.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
 
+    <!-- HEADER & NAV -->
     <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50">
-        <div class="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <i data-lucide="zap" class="w-5 h-5 text-sky-400"></i>
-                <span class="font-bold text-lg tracking-tight text-white">Dimensionamento Linea</span>
+                <i data-lucide="cpu" class="w-6 h-6 text-sky-400"></i>
+                <span class="font-bold text-lg tracking-tight text-white">FieldEng<span class="text-sky-400">Toolkit</span></span>
             </div>
-            <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded font-mono">CEI 64-8</span>
+            <nav class="flex gap-2">
+                <button id="nav-cable" class="nav-btn active flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-sky-600/20 text-sky-400 border border-sky-500/30">
+                    <i data-lucide="zap" class="w-4 h-4"></i> Cavi
+                </button>
+                <button id="nav-breaker" class="nav-btn flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:text-slate-200">
+                    <i data-lucide="shield-alert" class="w-4 h-4"></i> Protezioni
+                </button>
+            </nav>
         </div>
     </header>
 
-    <main class="max-w-3xl w-full mx-auto p-4 sm:p-6">
-        <div class="bg-slate-800/80 border border-slate-700/80 p-5 rounded-xl">
-            <form id="cable-form" class="space-y-5">
-                
-                <!-- Input di Cantiere (Primari) -->
-                <div class="grid grid-cols-2 gap-4 border-b border-slate-700 pb-5">
-                    <div class="col-span-2 sm:col-span-1">
-                        <label class="block text-xs font-semibold text-sky-400 mb-1 uppercase">Potenza Attiva (kW)</label>
-                        <input type="number" id="c-power" step="0.1" min="0.1" value="15" class="form-input text-lg font-bold" required>
-                    </div>
-                    <div class="col-span-2 sm:col-span-1">
-                        <label class="block text-xs font-semibold text-sky-400 mb-1 uppercase">Sistema (V)</label>
-                        <select id="c-system" class="form-input text-lg font-bold">
-                            <option value="400">Trifase (400V)</option>
-                            <option value="230">Monofase (230V)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Tipo di Cavo</label>
-                        <select id="c-type" class="form-input">
-                            <option value="Cu-EPR">Rame - EPR/XLPE (FG16)</option>
-                            <option value="Cu-PVC">Rame - PVC (FS17)</option>
-                            <option value="Al-EPR">Alluminio - EPR/XLPE</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Metodo di Posa</label>
-                        <select id="c-installation" class="form-input">
-                            <option value="B1">B1 - Tubo in muratura / A vista</option>
-                            <option value="C">C - Cavo a parete / Muro</option>
-                            <option value="E">E - Passerella / Aria libera</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Input Secondari (Con Default) -->
-                <details class="group">
-                    <summary class="text-xs text-slate-400 cursor-pointer hover:text-sky-400 flex items-center gap-1 mt-2">
-                        <i data-lucide="settings-2" class="w-3 h-3"></i> Parametri Avanzati (cos&phi;, Lunghezza)
-                    </summary>
-                    <div class="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-700/50">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-400 mb-1">Lunghezza (m)</label>
-                            <input type="number" id="c-length" step="1" min="1" value="50" class="form-input">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-400 mb-1">Fattore di Potenza</label>
-                            <input type="number" id="c-cosphi" step="0.01" min="0.5" max="1.0" value="0.9" class="form-input">
-                        </div>
-                    </div>
-                </details>
-
-            </form>
-        </div>
-
-        <!-- Output Panel -->
-        <div class="mt-6 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
-            <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
-                <span class="text-xs font-semibold text-slate-300 uppercase">Risultato Dimensionamento</span>
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- ========================================== -->
+        <!-- MODULO 1: CAVI (Motore Tabellare)          -->
+        <!-- ========================================== -->
+        <section id="module-cable" class="module-section">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                    Dimensionamento Linee <span class="text-xs font-normal bg-sky-950 text-sky-300 border border-sky-800 px-2 py-1 rounded">CEI 64-8</span>
+                </h1>
             </div>
-            
-            <div class="p-5">
-                <div class="grid grid-cols-2 gap-4 mb-5">
-                    <div>
-                        <span class="text-xs text-slate-400 block mb-1">Corrente Impiego (Ib)</span>
-                        <span id="out-ib" class="text-3xl font-mono font-bold text-slate-100">- A</span>
-                    </div>
-                    <div>
-                        <span class="text-xs text-slate-400 block mb-1">Sezione Minima</span>
-                        <span id="out-section" class="text-3xl font-mono font-bold text-sky-400">- mm²</span>
-                    </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- INPUT -->
+                <div class="lg:col-span-5 bg-slate-800/80 border border-slate-700/80 p-5 rounded-xl">
+                    <form id="cable-form" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4 border-b border-slate-700 pb-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-sky-400 mb-1">Potenza (kW)</label>
+                                <input type="number" id="c-power" step="0.1" min="0.1" value="15" class="form-input font-bold" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-sky-400 mb-1">Sistema (V)</label>
+                                <select id="c-system" class="form-input font-bold">
+                                    <option value="400">Trifase (400V)</option>
+                                    <option value="230">Monofase (230V)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Tipo di Cavo</label>
+                                <select id="c-type" class="form-input">
+                                    <option value="Cu-EPR">Rame - EPR/XLPE</option>
+                                    <option value="Cu-PVC">Rame - PVC</option>
+                                    <option value="Al-EPR">Alluminio - EPR/XLPE</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Metodo Posa</label>
+                                <select id="c-installation" class="form-input">
+                                    <option value="B1">B1 (Tubo/Muro)</option>
+                                    <option value="C">C (A parete)</option>
+                                    <option value="E">E (Passerella/Aria)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <details class="group pt-2">
+                            <summary class="text-xs text-slate-400 cursor-pointer hover:text-sky-400 flex items-center gap-1">
+                                <i data-lucide="settings-2" class="w-3 h-3"></i> Parametri Avanzati
+                            </summary>
+                            <div class="grid grid-cols-2 gap-3 mt-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1">Lunghezza (m)</label>
+                                    <input type="number" id="c-length" step="1" min="1" value="50" class="form-input">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1">cos&phi;</label>
+                                    <input type="number" id="c-cosphi" step="0.01" min="0.5" max="1.0" value="0.9" class="form-input">
+                                </div>
+                            </div>
+                        </details>
+
+                        <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 mt-4">
+                            <i data-lucide="calculator" class="w-4 h-4"></i> Calcola Sezione
+                        </button>
+                    </form>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-800">
-                    <div>
-                        <span class="text-xs text-slate-500 block">Portata Tabellare (Iz)</span>
-                        <span id="out-iz" class="text-lg font-mono text-emerald-400 font-semibold">- A</span>
-                    </div>
-                    <div>
-                        <span class="text-xs text-slate-500 block">Caduta Tensione (&Delta;U)</span>
-                        <span id="out-vdrop" class="text-lg font-mono text-amber-400 font-semibold">- %</span>
+                <!-- OUTPUT -->
+                <div class="lg:col-span-7">
+                    <div class="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-lg h-full">
+                        <div class="bg-slate-800 px-4 py-2 border-b border-slate-700">
+                            <span class="text-xs font-semibold text-slate-300 uppercase">Esito Dimensionamento</span>
+                        </div>
+                        <div class="p-5 flex flex-col justify-center h-[calc(100%-40px)]">
+                            <div class="grid grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <span class="text-xs text-slate-400 block mb-1">Corrente Impiego (Ib)</span>
+                                    <span id="out-ib" class="text-3xl font-mono font-bold text-slate-100">- A</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs text-slate-400 block mb-1">Sezione Minima (S)</span>
+                                    <span id="out-section" class="text-3xl font-mono font-bold text-sky-400">- mm²</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-6 pt-6 border-t border-slate-800">
+                                <div>
+                                    <span class="text-xs text-slate-500 block">Portata Tabellare (Iz)</span>
+                                    <span id="out-iz" class="text-xl font-mono text-emerald-400 font-semibold">- A</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs text-slate-500 block">Caduta Tensione (&Delta;U)</span>
+                                    <span id="out-vdrop" class="text-xl font-mono text-amber-400 font-semibold">- %</span>
+                                </div>
+                            </div>
+                            <div id="cable-status-box" class="mt-6 p-3 rounded bg-slate-800/50 text-xs text-slate-400 border border-slate-700">
+                                In attesa di calcolo...
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- MODULO 2: INTERRUTTORI                     -->
+        <!-- ========================================== -->
+        <section id="module-breaker" class="module-section hidden">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                    Protezioni Magnetotermiche <span class="text-xs font-normal bg-sky-950 text-sky-300 border border-sky-800 px-2 py-1 rounded">Auto-Sync</span>
+                </h1>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- INPUT -->
+                <div class="lg:col-span-5 bg-slate-800/80 border border-slate-700/80 p-5 rounded-xl">
+                    <form id="breaker-form" class="space-y-4">
+                        <div class="p-3 bg-slate-900/50 rounded-lg border border-slate-700 mb-4">
+                            <span class="text-xs text-sky-400 uppercase tracking-wider font-semibold block mb-2">Dati Linea Sincronizzati</span>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1">Corrente Ib (A)</label>
+                                    <input type="number" id="b-ib" step="0.1" min="0.1" class="form-input bg-slate-800" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1">Portata Cavo Iz (A)</label>
+                                    <input type="number" id="b-iz" step="0.1" min="0.1" class="form-input bg-slate-800" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-end mb-1">
+                                <label class="block text-xs font-medium text-slate-300">Icc Presunta (Ikc) kA</label>
+                                <select id="b-ikc-helper" class="text-xs bg-slate-900 border border-slate-700 text-sky-400 rounded px-1 py-0.5 outline-none cursor-pointer">
+                                    <option value="">Stima rapida...</option>
+                                    <option value="4.5">Terminale (4.5 kA)</option>
+                                    <option value="6.0">Rete Standard CEI 0-21 (6.0 kA)</option>
+                                    <option value="10.0">Distribuzione (10 kA)</option>
+                                    <option value="25.0">Vicino Cabina MT/BT (25 kA)</option>
+                                </select>
+                            </div>
+                            <input type="number" id="b-ikc" step="0.1" min="0.1" value="6.0" class="form-input" required>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1">Tipo Carico</label>
+                                <select id="b-loadtype" class="form-input">
+                                    <option value="resistive">Curva C</option>
+                                    <option value="motor">Curva D</option>
+                                    <option value="sensitive">Curva B</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 mt-2">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i> Calcola Interruttore
+                        </button>
+                    </form>
+                </div>
+
+                <!-- OUTPUT -->
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="bg-slate-800/80 border border-slate-700/80 p-5 rounded-xl h-full">
+                        <h2 class="text-md font-semibold text-slate-300 mb-4 uppercase tracking-wider text-xs">Esito Coordinamento</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+                                <span class="text-xs text-slate-400 block">Taglia (In)</span>
+                                <span id="out-in" class="text-2xl font-mono font-bold text-sky-400">- A</span>
+                            </div>
+                            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+                                <span class="text-xs text-slate-400 block">Curva</span>
+                                <span id="out-curve" class="text-2xl font-mono font-bold text-emerald-400">-</span>
+                            </div>
+                            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+                                <span class="text-xs text-slate-400 block">P. Interruzione</span>
+                                <span id="out-icu" class="text-2xl font-mono font-bold text-amber-400">- kA</span>
+                            </div>
+                        </div>
+
+                        <div id="breaker-status-box" class="p-4 rounded-lg border mb-4 bg-slate-900/40 border-slate-700 text-slate-300 text-sm">...</div>
+
+                        <div class="space-y-2 font-mono text-xs">
+                            <div id="check-rule1" class="p-3 bg-slate-900/60 rounded border border-slate-700 flex justify-between">
+                                <span>1. Ib &le; In &le; Iz</span><span id="val-rule1" class="font-bold">-</span>
+                            </div>
+                            <div id="check-rule2" class="p-3 bg-slate-900/60 rounded border border-slate-700 flex justify-between">
+                                <span>2. I2 &le; 1.45 &middot; Iz</span><span id="val-rule2" class="font-bold">-</span>
+                            </div>
+                            <div id="check-rule3" class="p-3 bg-slate-900/60 rounded border border-slate-700 flex justify-between">
+                                <span>3. Icu &ge; Ikc</span><span id="val-rule3" class="font-bold">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
-
     <script src="./js/app.js"></script>
 </body>
+</html>
 </html>
